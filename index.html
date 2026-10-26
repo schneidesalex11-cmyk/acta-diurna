@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acta Diurna</title>
+<meta name="description" content="Five slightly obscure, interesting words every day.">
+<meta name="theme-color" content="#f4ecd8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17130d" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Acta Diurna">
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#f4ecd8; --card:#fbf6e9; --ink:#2b2418; --muted:#7a6c52; --line:#e0d3b3;
+  --accent:#8c2f1b; --accent-ink:#fff; --good:#3b6b3a; --bad:#a3321f;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#17130d; --card:#211b12; --ink:#efe5cf; --muted:#a89877; --line:#3a2f1e;
+         --accent:#e0805f; --accent-ink:#1a1008; --good:#8cc48a; --bad:#ec8a77; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;line-height:1.5;
+  padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom))}
+main{max-width:680px;margin:0 auto;padding:0 16px}
+header{padding:22px 0 8px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:1.7rem;letter-spacing:.02em;font-weight:700}
+h1 small{display:block;font-size:.75rem;font-weight:400;font-style:italic;color:var(--muted);letter-spacing:0}
+.streak{font-size:.85rem;color:var(--muted);text-align:right;white-space:nowrap}
+.streak b{color:var(--accent);font-size:1.15rem}
+.daynav{display:flex;align-items:center;justify-content:space-between;margin:10px 0 14px;color:var(--muted);font-size:.9rem}
+.daynav button{background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;
+  width:40px;height:40px;font-size:1.1rem;cursor:pointer}
+.daynav button:disabled{opacity:.3;cursor:default}
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;margin-bottom:14px;
+  box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.card.learned{border-color:var(--good)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.word{font-size:1.85rem;font-weight:700;line-height:1.15;word-break:break-word}
+.meta{color:var(--muted);font-size:.9rem;margin-top:2px}
+.meta em{font-style:italic}
+.say{flex:none;border:1px solid var(--line);background:none;color:var(--accent);border-radius:999px;width:44px;height:44px;
+  font-size:1.2rem;cursor:pointer}
+.def{margin:12px 0 8px;font-size:1.08rem}
+.ex{margin:8px 0;padding-left:12px;border-left:3px solid var(--accent);font-style:italic}
+.ety{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+.ety b{font-style:normal;font-variant:small-caps;letter-spacing:.04em}
+.row{display:flex;justify-content:flex-end;margin-top:12px}
+.got{border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:9px 16px;font:inherit;font-size:.9rem;cursor:pointer;min-height:44px}
+.card.learned .got{background:var(--good);color:var(--accent-ink);border-color:var(--good)}
+.btn{display:block;width:100%;border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;
+  padding:14px;font:inherit;font-size:1.05rem;font-weight:700;cursor:pointer;min-height:48px}
+.btn.alt{background:none;border:1px solid var(--line);color:var(--ink);font-weight:400;margin-top:10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-size:.85rem;padding:12px 4px;min-height:56px;cursor:pointer}
+nav button.on{color:var(--accent);font-weight:700}
+nav button span{display:block;font-size:1.25rem;line-height:1}
+.quiz-q{font-size:1.15rem;margin:6px 0 16px}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);
+  border-radius:12px;padding:14px;font:inherit;font-size:1.05rem;margin-bottom:10px;cursor:pointer;min-height:48px}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--card))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--card))}
+.score{font-size:2.4rem;font-weight:700;text-align:center;margin:20px 0 6px}
+.hist{border-top:1px solid var(--line);padding:12px 0}
+.hist h3{margin:0 0 6px;font-size:.95rem;color:var(--muted);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:.95rem;cursor:pointer}
+.chip.l{border-color:var(--good);color:var(--good)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 18px;text-align:center}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 4px}
+.stats b{display:block;font-size:1.5rem;color:var(--accent)}
+.stats span{font-size:.75rem;color:var(--muted)}
+.poem{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px;margin:6px 0 14px}
+.poem .era{display:inline-block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);
+  background:var(--accent);border-radius:999px;padding:2px 10px}
+.poem h2{margin:10px 0 2px;font-size:1.4rem;line-height:1.25}
+.poem .by{color:var(--muted);font-size:.9rem;font-style:italic;margin-bottom:14px}
+.poem .txt{white-space:pre-wrap;font-size:1.05rem;line-height:1.65}
+.card.insult{border:2px solid var(--bad);background:color-mix(in srgb,var(--bad) 7%,var(--card));position:relative}
+.badge{display:inline-block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+  color:var(--accent-ink);background:var(--bad);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.chip.ins{border-color:var(--bad);color:var(--bad)}
+.share{margin-top:6px;border:1px solid var(--line);background:none;color:var(--accent);border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer;min-height:36px}
+.def.then{color:var(--muted);font-size:.98rem;margin-top:4px}
+.ref{display:inline-block;font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-left:4px;vertical-align:middle}
+.sect{margin:22px 0 10px;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted);font-size:.85rem;text-align:center;margin:20px 0}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav>
+  <button id="t-today" onclick="go('today')"><span>☀</span>Today</button>
+  <button id="t-quiz" onclick="go('quiz')"><span>?</span>Quiz</button>
+  <button id="t-arch" onclick="go('arch')"><span>❡</span>Archive</button>
+</nav>
+<script src="words.js"></script>
+<script src="words-gutenberg.js"></script>
+<script src="funverbs.js"></script>
+<script src="insults.js"></script>
+<script src="poems-chinese.js"></script>
+<script src="poems.js"></script>
+<script src="defs-compare.js"></script>
+<script src="audio.js"></script>
+<script>
+const START = Date.UTC(2026,9,26);           // day 0 = 26 Oct 2026
+const PER_DAY = 5, DAY_MS = 86400000;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---- state (localStorage, guarded) ----
+let S = {learned:{}, visited:{}, best:{}, known:{}, swaps:{}, rev:{}, mastered:{}, answered:{}};
+try { Object.assign(S, JSON.parse(localStorage.getItem('actaDiurna') || '{}')); } catch(e){}
+const save = () => { try { localStorage.setItem('actaDiurna', JSON.stringify(S)); } catch(e){} };
+
+// ---- date helpers ----
+function todayIdx(){
+  const n = new Date();
+  return Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - START) / DAY_MS);
+}
+const dateOf = i => new Date(START + i*DAY_MS);
+const fmt = i => dateOf(i).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
+function wordsFor(i){
+  const k = ((i % Math.ceil(WORDS.length/PER_DAY)) + Math.ceil(WORDS.length/PER_DAY)) % Math.ceil(WORDS.length/PER_DAY);
+  const out = [];
+  for (let j=0;j<PER_DAY;j++) out.push(WORDS[(k*PER_DAY + j) % WORDS.length]);
+  // apply "I already know this" swaps (a replacement can itself be swapped later)
+  const sw = S.swaps[i] || {};
+  return out.map(w => { let x = w, g = 0; while (sw[x[0]] && BY[sw[x[0]]] && g++ < 20) x = BY[sw[x[0]]]; return x; });
+}
+const BY = Object.fromEntries([...WORDS, ...INSULTS].map(w => [w[0], w]));
+const IS_INSULT = new Set(INSULTS.map(w => w[0]));
+
+// The daily 6th word: an old insult. Ones you already know are skipped.
+function insultFor(i){
+  const n = INSULTS.length, s = ((i % n) + n) % n;
+  for (let k = 0; k < n; k++) { const w = INSULTS[(s + k) % n]; if (!S.known[w[0]]) return w; }
+  return INSULTS[s];
+}
+
+// Prefer words not yet shown on any day so far; fall back to anything not known.
+function pickReplacement(exclude){
+  const used = new Set(exclude);
+  for (let d=0; d<=Math.max(TODAY,0); d++) wordsFor(d).forEach(w => used.add(w[0]));
+  Object.values(S.swaps).forEach(m => Object.values(m).forEach(v => used.add(v)));
+  let pool = WORDS.filter(w => !S.known[w[0]] && !used.has(w[0]));
+  if (!pool.length) pool = WORDS.filter(w => !S.known[w[0]] && !exclude.includes(w[0]));
+  return pool.length ? pool[Math.floor(Math.random()*pool.length)][0] : null;
+}
+// Replace any known words in day i (only today or earlier, so future days stay a surprise).
+function ensureDay(i){
+  if (i > Math.max(TODAY,0)) return;
+  for (const w of wordsFor(i)) {
+    if (!S.known[w[0]]) continue;
+    const r = pickReplacement(wordsFor(i).map(x => x[0]));
+    if (!r) break;
+    (S.swaps[i] = S.swaps[i] || {})[w[0]] = r;
+  }
+  save();
+}
+function knowIt(word){
+  S.known[word] = true; delete S.learned[word]; delete S.rev[word];
+  ensureDay(cur); render(); pushCfg();
+}
+function unknow(word){ delete S.known[word]; save(); render(); }
+function streak(){
+  let t = todayIdx(), n = 0;
+  if (!S.visited[t]) t--;               // today not opened yet: count back from yesterday
+  while (S.visited[t]) { n++; t--; }
+  return n;
+}
+
+// ---- view state ----
+let TODAY = todayIdx();
+let view = 'today', cur = TODAY, quiz = null;
+if (TODAY >= 0) { S.visited[TODAY] = true; save(); }
+if (TODAY < 0) { cur = 0; }               // device clock before launch date: show day 0
+
+function go(v, i){
+  view = v;
+  if (v === 'today') { if (i !== undefined) cur = i; }
+  if (v === 'quiz') { quiz = null; }
+  render();
+  window.scrollTo(0,0);
+}
+
+// ---- pronunciation: real recordings first, the device's best (or chosen) voice as fallback ----
+const rec = w => (typeof AUDIO !== 'undefined' && AUDIO[w]) || {};
+function speak(w){
+  if (rec(w).f) { new Audio(rec(w).f).play().catch(() => tts(w)); return; }
+  tts(w);
+}
+function englishVoices(){
+  return ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).filter(v => /^en(-|_|$)/i.test(v.lang));
+}
+function bestVoice(){
+  const vs = englishVoices();
+  const chosen = vs.find(v => v.name === S.voice);
+  if (chosen) return chosen;
+  // prefer the higher-quality voices browsers expose, over the robotic defaults
+  const score = v => (/natural|neural|premium|enhanced|siri/i.test(v.name) ? 4 : 0) + (/google|microsoft/i.test(v.name) ? 1 : 0) +
+                     (/en[-_](us|gb)/i.test(v.lang) ? 1 : 0) + (v.localService ? 0 : 1);
+  return vs.sort((a, b) => score(b) - score(a))[0] || null;
+}
+function tts(w){
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(w);
+  const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; }
+  u.rate = .9;
+  speechSynthesis.speak(u);
+}
+function setVoice(name){ S.voice = name || undefined; save(); tts('mellifluous'); }
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if (view === 'arch') render(); };
+
+// Kept words come back for review after growing gaps (days); recall every step and it's mastered.
+const INT = [1, 3, 7, 14, 30, 60];
+const today0 = () => Math.max(TODAY, 0);
+function toggle(w){
+  if (S.learned[w]) { delete S.learned[w]; delete S.rev[w]; }
+  else { S.learned[w] = true; S.rev[w] = {due: today0() + INT[0], step: 0}; }
+  save(); render(); pushCfg();
+}
+function reviewed(w, ok){
+  const r = S.rev[w]; if (!r) return;
+  if (!ok) { r.step = 0; r.due = today0() + 1; }
+  else if (++r.step >= INT.length) { delete S.rev[w]; S.mastered[w] = today0(); }
+  else r.due = today0() + INT[r.step];
+  save(); render(); pushCfg();
+}
+const dueWords = () => Object.keys(S.rev).filter(w => S.rev[w].due <= today0() && BY[w]);
+// words kept before reviews existed: schedule them for tomorrow
+Object.keys(S.learned).forEach(w => { if (!S.rev[w] && !S.mastered[w]) S.rev[w] = {due: today0() + 1, step: 0}; });
+
+// Words whose meaning has moved since 1913 carry both senses; quizzes test today's.
+const shifted = w => (typeof DEFS_COMPARE !== 'undefined' && DEFS_COMPARE[w]) || null;
+const defOf = w => shifted(w[0]) ? shifted(w[0]).now : w[3];
+
+// IPA (from Wiktionary) when available, with the plain-English respelling alongside
+const pronHtml = (w, pron) => rec(w).ipa ? `${esc(rec(w).ipa)} <span style="opacity:.75">(${esc(pron)})</span>` : `/${esc(pron)}/`;
+
+// ---- views ----
+function card(w){
+  const [word,pron,pos,def,ex,ety,src] = w;
+  const l = !!S.learned[word], ins = IS_INSULT.has(word);
+  return `<article class="card ${l?'learned':''} ${ins?'insult':''}">
+    ${ins ? `<span class="badge">🗡 Old insult</span>` : ''}
+    <div class="top">
+      <div><div class="word">${esc(word)}</div>
+      <div class="meta">${pronHtml(word, pron)} · <em>${esc(pos)}</em></div></div>
+      <button class="say" aria-label="Pronounce ${esc(word)}" title="${rec(word).f?'Human recording':'Device voice'}" onclick="speak('${esc(word).replace(/'/g,"\\'")}')">🔊</button>
+    </div>
+    ${shifted(word) ? `
+    <p class="def"><b>Today:</b> ${esc(shifted(word).now)} <span class="ref">Open English WordNet</span></p>
+    <p class="def then"><b>In 1913:</b> ${esc(shifted(word).then)} <span class="ref">Webster's Unabridged, via Project Gutenberg</span></p>`
+    : `<p class="def">${esc(def)}</p>`}
+    ${ex ? `<p class="ex">${esc(ex)}</p>` : ''}
+    ${ety ? `<p class="ety"><b>Origin</b> · ${esc(ety)}</p>` : ''}
+    ${src === 'W1913' && !shifted(word) ? `<p class="ety">From Webster's Unabridged Dictionary (1913), via Project Gutenberg</p>` : ''}
+    <div class="row" style="justify-content:space-between;gap:8px">
+      <button class="got" style="color:var(--muted)" onclick="knowIt('${esc(word).replace(/'/g,"\\'")}')">I know it · swap ↻</button>
+      <button class="got" onclick="toggle('${esc(word).replace(/'/g,"\\'")}')">${l?'✓ Kept · will review':'Keep · review later'}</button>
+    </div>
+  </article>`;
+}
+
+function viewToday(){
+  ensureDay(cur);
+  const ws = wordsFor(cur);
+  const n = ws.filter(w => S.learned[w[0]]).length;
+  const isToday = cur === TODAY;
+  return `
+  <div class="daynav">
+    <button onclick="go('today',${cur-1})" aria-label="Previous day" ${cur<=0?'disabled':''}>‹</button>
+    <div>${isToday?'Today · ':''}${fmt(cur)}</div>
+    <button onclick="go('today',${cur+1})" aria-label="Next day" ${cur>=Math.max(TODAY,0)?'disabled':''}>›</button>
+  </div>
+  <div class="progress"><i style="width:${n/PER_DAY*100}%"></i></div>
+  ${isToday ? viewReviews() : ''}
+  <div class="sect">Five words</div>
+  ${ws.map(card).join('')}
+  <div class="sect">…and one old insult</div>
+  ${card(insultFor(cur))}
+  <button class="btn" onclick="startQuiz(${cur})">Test yourself on these 6</button>
+  ${isToday ? `<button class="btn alt" onclick="markDone()">${S.answered[TODAY] ? '✓ Done for today' : "I'm done for today (stops the nagging)"}</button>` : ''}
+  <div class="sect">Poem of the day</div>
+  ${poemCard(poemFor(cur))}
+  <div class="sect">More today, from around the web</div>
+  <p class="meta" style="line-height:2">
+    <a href="https://www.poetryfoundation.org/poems/poem-of-the-day" target="_blank" rel="noopener" style="color:var(--accent)">Poetry Foundation: Poem of the Day ↗</a><br>
+    <a href="https://www.merriam-webster.com/word-of-the-day" target="_blank" rel="noopener" style="color:var(--accent)">Merriam-Webster: Word of the Day ↗</a><br>
+    <a href="https://www.dictionary.com/word-of-the-day" target="_blank" rel="noopener" style="color:var(--accent)">Dictionary.com: Word of the Day ↗</a>
+  </p>`;
+}
+
+function viewReviews(){
+  const due = dueWords();
+  if (!due.length) return '';
+  return `<div class="sect">Review · ${due.length} kept word${due.length>1?'s':''} due</div>` + due.map(w => {
+    const [word,pron,pos,,ex] = BY[w], def = defOf(BY[w]), q = esc(word).replace(/'/g,"\\'");
+    return `<article class="card">
+      <div class="top"><div><div class="word">${esc(word)}</div><div class="meta">${pronHtml(word, pron)} · <em>${esc(pos)}</em></div></div>
+      <button class="say" aria-label="Pronounce ${esc(word)}" onclick="speak('${q}')">🔊</button></div>
+      <details><summary class="meta" style="cursor:pointer;margin-top:10px">Can you remember it? Tap to check</summary>
+        <p class="def">${esc(def)}</p>${ex?`<p class="ex">${esc(ex)}</p>`:''}</details>
+      <div class="row" style="justify-content:space-between;gap:8px">
+        <button class="got" style="color:var(--bad)" onclick="reviewed('${q}',false)">Forgot · see it again tomorrow</button>
+        <button class="got" style="color:var(--good)" onclick="reviewed('${q}',true)">Remembered ✓</button>
+      </div></article>`;
+  }).join('');
+}
+
+function poemFor(i){ return POEMS[((i % POEMS.length) + POEMS.length) % POEMS.length]; }
+function poemCard(p){
+  const [title,author,era,note,text,orig,origTitle] = p;
+  return `<article class="poem">
+    <span class="era">${esc(era)}</span>
+    <h2>${esc(title)}</h2>
+    <div class="by">${esc(author)} · ${esc(note)}</div>
+    <div class="txt">${esc(text)}</div>
+    ${orig ? `<details style="margin-top:14px"><summary class="meta" style="cursor:pointer">Original Chinese · ${esc(origTitle)}</summary>
+      <div class="txt" lang="zh-Hant" style="margin-top:10px;font-size:1.15rem;line-height:1.9">${esc(orig)}</div>
+      <p class="ety">From 唐詩三百首 / 詩經, via Project Gutenberg ·
+        <a href="https://www.deepl.com/translator#zh/en-us/${encodeURIComponent(orig)}" target="_blank" rel="noopener" style="color:var(--accent)">Compare in DeepL ↗</a></p>
+    </details>` : ''}
+  </article>`;
+}
+
+function startQuiz(i){
+  const ws = [...wordsFor(i), insultFor(i)];
+  const qs = ws.map(w => {
+    const others = (IS_INSULT.has(w[0]) ? INSULTS : WORDS).filter(x => x[0] !== w[0]).sort(() => Math.random()-.5).slice(0,3);
+    const opts = [w, ...others].sort(() => Math.random()-.5).map(x => x[0]);
+    return {def:defOf(w), ans:w[0], opts};
+  }).sort(() => Math.random()-.5);
+  quiz = {day:i, qs, q:0, score:0, picked:null};
+  view = 'quiz'; render(); window.scrollTo(0,0);
+}
+
+function pick(o){
+  if (quiz.picked !== null) return;
+  quiz.picked = o;
+  if (o === quiz.qs[quiz.q].ans) quiz.score++;
+  render();
+}
+function nextQ(){
+  quiz.q++; quiz.picked = null;
+  if (quiz.q >= quiz.qs.length) {
+    S.best[quiz.day] = Math.max(S.best[quiz.day]||0, quiz.score);
+    if (quiz.day === TODAY) S.answered[TODAY] = true;   // finishing today's quiz counts as answering
+    save(); pushCfg();
+  }
+  render();
+}
+function markDone(){ S.answered[TODAY] = true; save(); pushCfg(); render(); }
+
+function viewQuiz(){
+  if (!quiz) {
+    return `<div class="daynav"><div>Quick quiz</div></div>
+    <p>Match the definition to the word. Choose which day to practise:</p>
+    <button class="btn" onclick="startQuiz(${Math.max(TODAY,0)})">Today's 5 words</button>
+    <button class="btn alt" onclick="startReview()">Mixed review of everything so far</button>`;
+  }
+  if (quiz.q >= quiz.qs.length) {
+    const s = quiz.score, t = quiz.qs.length;
+    return `<div class="score">${s} / ${t}</div>
+    <p style="text-align:center">${s===t?'Flawless. Impressive vocabulary, truly sesquipedalian.':s>=t-1?'Nearly there.':'Worth another look at the cards.'}</p>
+    <button class="btn" onclick="quiz.day==='mix'?startReview():startQuiz(quiz.day)">Try again</button>
+    <button class="btn alt" onclick="go('today',Math.max(TODAY,0))">Back to words</button>`;
+  }
+  const q = quiz.qs[quiz.q];
+  const opts = q.opts.map(o => {
+    let cls = '';
+    if (quiz.picked !== null) cls = o === q.ans ? 'right' : (o === quiz.picked ? 'wrong' : '');
+    return `<button class="opt ${cls}" onclick="pick('${esc(o).replace(/'/g,"\\'")}')">${esc(o)}</button>`;
+  }).join('');
+  return `<div class="daynav"><div>Question ${quiz.q+1} of ${quiz.qs.length}</div><div>Score ${quiz.score}</div></div>
+  <p class="quiz-q">${esc(q.def)}</p>
+  ${opts}
+  ${quiz.picked!==null?`<button class="btn" onclick="nextQ()">${quiz.q+1>=quiz.qs.length?'See score':'Next'}</button>`:''}`;
+}
+
+function startReview(){
+  const pool = [];
+  for (let d=0; d<=Math.max(TODAY,0); d++) pool.push(...wordsFor(d));
+  // kept words first (that's what you're trying to learn), then anything else seen so far
+  const keptW = Object.keys(S.rev).filter(w => BY[w]).map(w => BY[w]).sort(() => Math.random()-.5);
+  const rest = [...new Map(pool.map(w => [w[0],w])).values()].filter(w => !S.rev[w[0]]).sort(() => Math.random()-.5);
+  const uniq = [...keptW, ...rest].slice(0,8);
+  const qs = uniq.map(w => {
+    const others = (IS_INSULT.has(w[0]) ? INSULTS : WORDS).filter(x => x[0] !== w[0]).sort(() => Math.random()-.5).slice(0,3);
+    return {def:defOf(w), ans:w[0], opts:[w,...others].sort(() => Math.random()-.5).map(x => x[0])};
+  });
+  quiz = {day:'mix', qs, q:0, score:0, picked:null};
+  view = 'quiz'; render(); window.scrollTo(0,0);
+}
+
+function viewArch(){
+  const learnedN = Object.keys(S.learned).length;
+  const seen = new Set();
+  for (let d=0; d<=Math.max(TODAY,0); d++) wordsFor(d).forEach(w => seen.add(w[0]));
+  let h = `<div class="daynav"><div>Archive</div></div>
+  <div class="stats">
+    <div><b>${streak()}</b><span>day streak</span></div>
+    <div><b>${seen.size}</b><span>words met</span></div>
+    <div><b>${learnedN}</b><span>learned</span></div>
+  </div>`;
+  const R = S.remind || {on:false, time:'08:00'};
+  h += `<div class="card">
+    <div class="word" style="font-size:1.2rem">Daily reminder</div>
+    <p class="meta">Pick a time. On iPhone, notifications need iOS 16.4+ and the app added to your Home Screen (Share → Add to Home Screen); the calendar option below works everywhere.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="time" id="rtime" value="${R.time}" onchange="setRemind()" style="font:inherit;font-size:1.1rem;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px">
+      <button class="got" onclick="enableNotif()">${R.on?'✓ Notifications on':'Turn on notifications'}</button>
+    </div>
+    <label class="meta" style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+      <input type="checkbox" ${R.nag?'checked':''} onchange="setNag(this.checked)" style="width:22px;height:22px">
+      <b style="color:var(--ink)">Nag me until I answer</b> · repeat every
+      <select onchange="setNagEvery(this.value)" style="font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
+        ${[5,10,15,30,60].map(m => `<option value="${m}" ${(R.every||15)==m?'selected':''}>${m} min</option>`).join('')}
+      </select>
+    </label>
+    <p class="ety">Stops when you finish today's quiz or tap "I'm done for today". Each nag gets ruder, using the day's old insult.
+      Phones only let a web app notify while it's open or in the background, so for a phone, also add the naggy calendar below.</p>
+    <p class="meta" style="margin-top:12px">For a reminder that never misses, also add it to your calendar:</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="got" onclick="downloadIcs(false)">Add daily event (.ics)</button>
+      <button class="got" onclick="downloadIcs(true)">Add naggy version: 6 alerts a day</button>
+    </div>
+    <p class="ety" id="rmsg"></p>
+  </div>`;
+  const vs = englishVoices();
+  h += `<div class="card">
+    <div class="word" style="font-size:1.2rem">Pronunciation voice</div>
+    <p class="meta">Most words play a real human recording. This voice only reads words that have none.${vs.length ? '' : ' (No voices found on this device.)'}</p>
+    <select onchange="setVoice(this.value)" style="font:inherit;font-size:1rem;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%;min-height:44px">
+      <option value="">Automatic (best available)</option>
+      ${vs.map(v => `<option value="${esc(v.name)}" ${v.name===S.voice?'selected':''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('')}
+    </select>
+    <p class="ety">On iPhone, nicer voices can be downloaded in Settings → Accessibility → Spoken Content → Voices → English (pick an "Enhanced" or "Premium" one), then chosen here.</p>
+  </div>`;
+  for (let d=Math.max(TODAY,0); d>=0; d--) {
+    h += `<div class="hist"><h3>${fmt(d)}${S.best[d]!==undefined?` · quiz ${S.best[d]}/6`:''}</h3><div class="chips">` +
+      [...wordsFor(d), insultFor(d)].map(w => `<button class="chip ${S.learned[w[0]]?'l':''} ${IS_INSULT.has(w[0])?'ins':''}" onclick="go('today',${d})">${esc(w[0])}</button>`).join('') +
+      `</div><div class="meta" style="margin-top:8px">Poem: ${esc(poemFor(d)[0])} · ${esc(poemFor(d)[1])}</div></div>`;
+  }
+  const kept = Object.keys(S.rev).filter(w => BY[w]).sort((a,b) => S.rev[a].due - S.rev[b].due);
+  if (kept.length) h += `<div class="hist"><h3>Kept words in review · comes back in…</h3><div class="chips">` +
+    kept.map(w => { const d = S.rev[w].due - today0(); return `<span class="chip l">${esc(w)} · ${d<=0?'today':d===1?'tomorrow':d+' days'}</span>`; }).join('') + `</div></div>`;
+  const mast = Object.keys(S.mastered);
+  if (mast.length) h += `<div class="hist"><h3>Mastered (${mast.length})</h3><div class="chips">` +
+    mast.map(w => `<span class="chip">${esc(w)}</span>`).join('') + `</div></div>`;
+  const known = Object.keys(S.known);
+  if (known.length) h += `<div class="hist"><h3>Words you already knew (skipped from now on) · tap to bring one back</h3><div class="chips">` +
+    known.map(w => `<button class="chip" onclick="unknow('${esc(w).replace(/'/g,"\\'")}')">${esc(w)} ✕</button>`).join('') + `</div></div>`;
+  h += `<p class="hint">${WORDS.length} words and ${INSULTS.length} insults in the book. When it runs out, the cycle begins again.<br>
+    Sources: Webster's 1913 &amp; classic texts via Project Gutenberg · modern senses from Open English WordNet (CC BY 4.0) ·
+    recordings by Wiktionary contributors (<a href="audio-credits.json" style="color:var(--accent)">credits</a>) ·
+    <a href="https://github.com/schneidesalex11-cmyk/acta-diurna#sources-and-licences" style="color:var(--accent)">all licences</a></p>`;
+  return h;
+}
+
+function render(){
+  $('app').innerHTML = `<header>
+    <h1>Acta Diurna<small>five words, daily</small></h1>
+    <div class="streak"><b>${streak()}</b> day streak<br>
+      <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button></div></header>` +
+    (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : viewArch());
+  ['today','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
+}
+
+// if the app stays open past midnight, roll over to the new day
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && todayIdx() !== TODAY) {
+    const was = cur === TODAY;
+    TODAY = todayIdx();
+    if (TODAY >= 0) { S.visited[TODAY] = true; save(); }
+    if (was) cur = Math.max(TODAY,0);
+    render();
+  }
+});
+
+// ---- reminders ----
+const msg = t => { const m = $('rmsg'); if (m) m.textContent = t; };
+function pushCfg(){
+  if (!('serviceWorker' in navigator) || !S.remind) return;
+  const n = new Date();
+  const cfg = {...S.remind, wordsKey: n.getFullYear()+'-'+n.getMonth()+'-'+n.getDate(),
+               words: TODAY >= 0 ? wordsFor(TODAY).map(w => w[0]) : null,
+               insult: insultFor(today0())[0],
+               answered: !!S.answered[TODAY],
+               due: Object.keys(S.rev).filter(w => S.rev[w].due <= today0() + 0).length};
+  navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage({type:'cfg', cfg})).catch(()=>{});
+}
+function setRemind(){
+  S.remind = {...(S.remind||{on:false}), time: $('rtime').value || '08:00'};
+  save(); pushCfg();
+}
+async function enableNotif(){
+  if (!('Notification' in window)) { msg('This browser has no notifications. Use the calendar option instead (on iPhone, install to Home Screen first).'); return; }
+  const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  if (p !== 'granted') { msg('Notifications were blocked. Allow them in your browser settings, or use the calendar option.'); return; }
+  S.remind = {...(S.remind||{}), on:true, time: $('rtime').value || '08:00'};
+  save(); pushCfg();
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.periodicSync) await reg.periodicSync.register('daily-words', {minInterval: 12*3600*1000});
+  } catch(e){}
+  render(); msg('On. Your browser decides exactly when background checks run, so the calendar option is more punctual.');
+}
+function setNag(on){ S.remind = {...(S.remind||{on:false, time:'08:00'}), nag:on, every:(S.remind||{}).every||15}; save(); pushCfg();
+  if (on && !(S.remind.on)) msg('Also tap "Turn on notifications" above so the nags can reach you.'); }
+function setNagEvery(m){ S.remind = {...(S.remind||{on:false, time:'08:00'}), every:+m}; save(); pushCfg(); }
+
+// Calendar events fire reliably on every phone. The naggy file adds 6 escalating alerts a day
+// (a calendar can't know when you've answered, so delete it if it gets too much).
+const NAGS = ['Your five words are ready.', 'Still waiting. Five words, one insult.', 'Ahem. The words are getting cold.',
+  'This is getting embarrassing, you jobbernowl.', 'Even a ninnyhammer would have opened it by now.', 'Final warning, you slubberdegullion!'];
+function downloadIcs(naggy){
+  const t = ($('rtime') ? $('rtime').value : (S.remind||{}).time) || '08:00';
+  const [h, m] = t.split(':').map(Number);
+  const n = new Date(), p = x => String(x).padStart(2,'0');
+  const url = location.href.split('#')[0].replace(/[^/]*$/, 'index.html');
+  const offsets = naggy ? [0, 15, 30, 60, 120, 240] : [0];
+  const ev = offsets.map((o, k) => {
+    const at = new Date(n.getFullYear(), n.getMonth(), n.getDate(), h, m + o);
+    const d = `${at.getFullYear()}${p(at.getMonth()+1)}${p(at.getDate())}T${p(at.getHours())}${p(at.getMinutes())}00`;
+    return ['BEGIN:VEVENT', `UID:acta-diurna-${naggy?'nag':'daily'}-${k}@local`, 'DTSTAMP:'+d, 'DTSTART:'+d, 'DURATION:PT5M',
+      'RRULE:FREQ=DAILY', 'SUMMARY:Acta Diurna: ' + NAGS[k], 'URL:'+url, 'DESCRIPTION:Open '+url,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + NAGS[k], 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT'].join('\r\n');
+  });
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ActaDiurna//EN', ...ev, 'END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], {type:'text/calendar'}));
+  a.download = naggy ? 'acta-diurna-naggy.ics' : 'acta-diurna-daily.ics';
+  a.click();
+  msg(naggy ? 'Open the file to add 6 daily alerts (at your time, then +15, +30 min, +1, +2 and +4 hours).'
+            : 'Open the downloaded file to add the daily event to your calendar.');
+}
+
+// ---- sharing ----
+async function shareApp(){
+  const url = location.href.split('#')[0].replace(/[^/]*$/, '');
+  const data = {title: 'Acta Diurna', text: 'Five interesting words, an old insult and a poem every day.', url};
+  try {
+    if (navigator.share) { await navigator.share(data); return; }
+    await navigator.clipboard.writeText(url);
+    alert('Link copied: ' + url);
+  } catch (e) { if (e && e.name !== 'AbortError') prompt('Copy this link to share:', url); }
+}
+setInterval(pushCfg, 60000);
+document.addEventListener('visibilitychange', pushCfg);
+
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(pushCfg).catch(()=>{});
+</script>
+</body>
+</html>

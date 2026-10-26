@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# build inputs downloaded by tools/ (large, re-downloadable)
+sources/
+.DS_Store
+Thumbs.db

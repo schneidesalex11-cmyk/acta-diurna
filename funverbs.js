@@ -1,0 +1,63 @@
+// Hand-picked fun verbs, spread evenly through the year's word list (after the first 272 hand-written words).
+// [word, pronunciation, part of speech, definition, example, origin]
+const FUN_VERBS = [
+["absquatulate","ab-SKWOT-choo-layt","verb","To leave abruptly; to make off without warning.","When the bill arrived, he absquatulated through the kitchen.","Mock-Latin American slang of the 1830s, a joke on words like 'abscond' and 'squat'."],
+["perendinate","per-EN-dih-nayt","verb","To put something off until the day after tomorrow.","Why procrastinate when you can perendinate?","Latin perendie, 'on the day after tomorrow'."],
+["cachinnate","KAK-ih-nayt","verb","To laugh loudly and immoderately.","The whole back row cachinnated at the typo on the slide.","Latin cachinnare, imitative of loud laughter."],
+["snirtle","SNUR-tul","verb","To snicker; to laugh in a suppressed, snorting way.","The children snirtled behind their hymn books.","Scots; used by Robert Burns."],
+["canoodle","kuh-NOO-dul","verb","To kiss and cuddle amorously.","Two teenagers canoodled in the back row of the cinema.","American slang, 1850s; origin unknown."],
+["discombobulate","dis-kum-BOB-yuh-layt","verb","To confuse or disconcert someone completely.","The new tax form discombobulated the entire office.","Fanciful American coinage of the 1830s, on 'discompose' or 'discomfit'."],
+["flummox","FLUM-uks","verb","To bewilder or perplex utterly.","The riddle flummoxed even the professor.","English dialect, 1830s; probably imitative."],
+["hornswoggle","HORN-swog-ul","verb","To cheat or swindle someone.","He was hornswoggled into buying a bridge.","American slang, 1820s; origin unknown."],
+["lollygag","LOL-ee-gag","verb","To dawdle or fool around aimlessly.","Stop lollygagging and pack the car.","American, 1860s; origin unknown."],
+["skedaddle","skih-DAD-ul","verb","To run away hurriedly.","The cat skedaddled when the vacuum started.","American Civil War slang, 1861."],
+["gallivant","GAL-ih-vant","verb","To go from place to place in search of pleasure.","She spent the summer gallivanting around Europe.","Perhaps a playful alteration of 'gallant'."],
+["bloviate","BLOH-vee-ayt","verb","To talk at length in a pompous, empty way.","The senator bloviated for an hour without saying anything.","American, 1840s, from 'blow' with a Latin-ish ending; popularised by Warren Harding."],
+["mollycoddle","MOL-ee-kod-ul","verb","To treat someone too indulgently or protectively.","Stop mollycoddling the dog; he can climb the stairs.","Molly (a girl's name) + coddle."],
+["kowtow","kow-TOW","verb","To act in an excessively servile way.","He kowtowed to every request from the new boss.","Chinese kētóu, 'knock the head': a deep bow touching the forehead to the ground."],
+["bamboozle","bam-BOO-zul","verb","To trick or deceive.","The con artist bamboozled half the town.","English slang c. 1700; origin unknown."],
+["perambulate","per-AM-byuh-layt","verb","To walk or stroll through or around a place.","They perambulated the gardens after dinner.","Latin per (through) + ambulare (to walk)."],
+["cavort","kuh-VORT","verb","To jump or dance around excitedly.","Lambs cavorted across the meadow.","American, 1790s; perhaps from 'curvet', a horse's leap."],
+["carouse","kuh-ROWZ","verb","To drink plenty of alcohol and enjoy oneself noisily.","The sailors caroused until dawn.","German gar aus (trinken), 'drink it all out'."],
+["fossick","FOS-ik","verb","To rummage or search about for something.","She fossicked through the drawer for a pen.","Australian, from English dialect; first used of prospecting for gold."],
+["finagle","fih-NAY-gul","verb","To obtain something by devious or dishonest means.","He finagled two tickets to the sold-out show.","American, 1920s; probably from dialect 'fainaigue', to cheat."],
+["hoodwink","HOOD-wink","verb","To deceive or trick.","They hoodwinked the guard with a forged pass.","Originally 'to blindfold with a hood'."],
+["hobnob","HOB-nob","verb","To mix socially, especially with people of higher status.","At the gala he hobnobbed with film stars.","From 'hab nab', 'have or have not', of drinking together."],
+["kibitz","KIB-its","verb","To look on and offer unwanted advice, especially at a card game.","Grandpa kibitzed over every hand of poker.","Yiddish, from German kiebitzen, after the lapwing (Kiebitz), a noisy bird."],
+["schlep","SHLEP","verb","To haul or carry something heavy or awkward.","We schlepped the sofa up four flights of stairs.","Yiddish shlepn, 'to drag'."],
+["cajole","kuh-JOHL","verb","To persuade someone with flattery or gentle coaxing.","She cajoled her brother into doing the dishes.","French cajoler, 'to coax'."],
+["flabbergast","FLAB-er-gast","verb","To surprise someone greatly; to astonish.","The magician flabbergasted the audience.","English slang, 1770s; perhaps flabby + aghast."],
+["harrumph","huh-RUMF","verb","To clear one's throat noisily; to grumble in disapproval.","The colonel harrumphed at the very idea.","Imitative, 1930s."],
+["chortle","CHOR-tul","verb","To laugh in a breathy, gleeful way.","He chortled over the crossword.","Coined by Lewis Carroll in 'Through the Looking-Glass' (1871): chuckle + snort."],
+["caterwaul","KAT-er-wawl","verb","To make a shrill, howling noise.","Cats caterwauled on the fence all night.","Middle English: cat + wawen (to howl)."],
+["bedizen","bih-DY-zun","verb","To dress or decorate gaudily.","The room was bedizened with tinsel and plastic grapes.","be- + obsolete dizen, 'to dress a distaff with flax'."],
+["befuddle","bih-FUD-ul","verb","To make someone unable to think clearly.","The instructions befuddled everyone.","be- + fuddle, 'to make drunk'."],
+["boondoggle","BOON-dog-ul","verb","To waste time or money on pointless work.","They boondoggled for months on a project nobody needed.","American, 1930s; originally a Boy Scout's braided lanyard."],
+["dillydally","DIL-ee-dal-ee","verb","To waste time through dawdling or indecision.","Don't dillydally; the train leaves in five minutes.","Reduplication of 'dally'."],
+["shilly-shally","SHIL-ee-shal-ee","verb","To fail to act decisively.","He shilly-shallied over the menu for twenty minutes.","From 'shall I? shall I?'."],
+["sashay","sa-SHAY","verb","To walk ostentatiously, swinging the hips.","She sashayed across the room in her new coat.","American alteration of French chassé, a gliding dance step."],
+["mosey","MOH-zee","verb","To walk or move in a leisurely way.","Let's mosey down to the river.","American, 1820s; origin uncertain."],
+["vamoose","va-MOOS","verb","To leave hurriedly.","The kids vamoosed when they heard the car.","Spanish vamos, 'let's go'."],
+["quaff","KWOF","verb","To drink something heartily.","They quaffed cold cider in the shade.","Possibly imitative; 1520s."],
+["scarper","SKAR-per","verb","To run away.","The burglars scarpered when the alarm went off.","British slang, probably from Italian scappare, 'to escape'."],
+["snaffle","SNAF-ul","verb","To take something for oneself, quickly or slyly.","Someone snaffled the last biscuit.","English dialect; perhaps from snaffle, a horse's bit."],
+["skulk","SKULK","verb","To keep out of sight, often with sinister motives.","A fox skulked at the edge of the garden.","Scandinavian; compare Norwegian skulka, 'to lurk'."],
+["kvetch","KVECH","verb","To complain persistently.","He kvetched about the weather all holiday.","Yiddish kvetshn, 'to squeeze, to complain'."],
+["fribble","FRIB-ul","verb","To waste time on trifles.","They fribbled away the afternoon.","1620s; perhaps from 'frivolous'."],
+["whiffle","WIF-ul","verb","To vacillate; (of wind) to blow in light, shifting puffs.","He whiffled between the two jobs for a month.","Frequentative of 'whiff'."],
+["susurrate","SOO-suh-rayt","verb","To whisper or murmur.","The reeds susurrated in the breeze.","Latin susurrare, 'to whisper'."],
+["ululate","UL-yuh-layt","verb","To howl or wail as an expression of strong emotion.","The crowd ululated as the bride appeared.","Latin ululare, 'to howl'."],
+["obnubilate","ob-NOO-bih-layt","verb","To darken or obscure, as with a cloud.","Jargon obnubilated the whole report.","Latin ob- + nubilare, 'to cloud over'."],
+["tittup","TIT-up","verb","To move with jerky or exaggerated jumpy movements; to prance.","The pony tittupped along the lane.","Probably imitative of a horse's hoofbeats."],
+["frowst","FROWST","verb","To stay in a warm, stuffy room; to laze about indoors.","They frowsted by the fire all Sunday.","British, from 'frowsty', stuffy."],
+["slubber","SLUB-er","verb","To do something carelessly or hastily; to smear.","He slubbered through his homework in five minutes.","Probably Low German slubberen, 'to work carelessly'."],
+["wamble","WOM-bul","verb","To move unsteadily; (of the stomach) to rumble with nausea.","After the boat trip his stomach wambled for hours.","Middle English wamelen, 'to feel nausea'."],
+["smoulder","SMOHL-der","verb","To burn slowly without flame; to feel suppressed anger.","He smouldered silently through the meeting.","Middle English smolderen."],
+["galumph","guh-LUMF","verb","To move in a clumsy, ponderous but happy way.","The puppy galumphed across the lawn.","Coined by Lewis Carroll (1871)."]
+].filter(w => !WORDS.some(x => x[0] === w[0]));   // skip any already in the list
+
+// Spread them evenly so a fun verb turns up every week or so instead of all at once.
+(() => {
+  const head = 272, gap = Math.max(1, Math.floor((WORDS.length - head) / FUN_VERBS.length));
+  FUN_VERBS.forEach((w, k) => WORDS.splice(Math.min(WORDS.length, head + k * (gap + 1)), 0, w));
+})();
