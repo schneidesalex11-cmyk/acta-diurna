@@ -100,6 +100,10 @@ html,body{overscroll-behavior-y:contain}
 #ptr.spin::before{content:'';display:inline-block;width:.8em;height:.8em;margin-right:8px;border:2px solid currentColor;
   border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.done-banner{background:var(--good);color:var(--accent-ink);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-weight:700;text-align:center}
+.btn.done-btn{background:var(--good);color:var(--accent-ink);margin-top:10px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent-ink) 35%,transparent)}
+.btn.done-btn small{display:block;font-weight:400;font-size:.8rem;opacity:.9}
+.done-chip{display:inline-block;background:var(--good);color:var(--accent-ink);border-radius:999px;padding:2px 8px;font-size:.75rem;font-weight:700}
 .say.fav{font-size:1.3rem;color:var(--muted)}
 .say.fav.on{color:var(--bad);border-color:var(--bad)}
 .def.then{color:var(--muted);font-size:.98rem;margin-top:4px}
@@ -311,6 +315,7 @@ function viewToday(){
     <button onclick="go('today',${cur+1})" aria-label="Next day" ${cur>=Math.max(TODAY,0)?'disabled':''}>›</button>
   </div>
   <div class="progress"><i style="width:${n/PER_DAY*100}%"></i></div>
+  ${isToday && S.answered[TODAY] ? `<div class="done-banner" role="status">✓ Done for today. No more reminders until tomorrow.</div>` : ''}
   ${isToday ? viewReviews() : ''}
   ${isToday && missedWords().length ? `<button class="btn alt" style="border-color:var(--bad);color:var(--bad)" onclick="go('quiz')">Review ${missedWords().length} word${missedWords().length>1?'s':''} you got wrong →</button>` : ''}
   <div class="sect">Five words</div>
@@ -318,9 +323,11 @@ function viewToday(){
   <div class="sect">…and one old insult</div>
   ${card(insultFor(cur))}
   <button class="btn" onclick="startQuiz(${cur})">Test yourself on these 6</button>
-  ${isToday ? `<button class="btn alt" onclick="markDone()">${S.answered[TODAY] ? '✓ Done for today' : "I'm done for today (stops the nagging)"}</button>` : ''}
-  <div class="sect">Poem of the day</div>
-  ${poemCard(poemFor(cur))}
+  ${isToday ? (S.answered[TODAY]
+      ? `<button class="btn done-btn" aria-pressed="true" onclick="markDone()">✓ Done for today<small>Saved on this device · tap to undo</small></button>`
+      : `<button class="btn alt" aria-pressed="false" onclick="markDone()">I'm done for today (stops the nagging)</button>`) : ''}
+  <div class="sect">${poemsPerDay() > 1 ? 'Poems of the day' : 'Poem of the day'}</div>
+  ${poemsForDay(cur).map(poemCard).join('')}
   <button class="btn alt" onclick="go('poems')">More poems →</button>
   <div class="sect">More today, from around the web</div>
   <p class="meta" style="line-height:2">
@@ -348,6 +355,11 @@ function viewReviews(){
 }
 
 function poemFor(i){ return POEMS[((i % POEMS.length) + POEMS.length) % POEMS.length]; }
+// 1–3 poems a day. Day i takes poems i*n … i*n+n-1; POEMS alternates eras, so they're from different eras
+// and no poem repeats from one day to the next.
+const poemsPerDay = () => Math.min(3, Math.max(1, S.poemsPerDay || 1));
+function poemsForDay(i){ const n = poemsPerDay(); return Array.from({length: n}, (_, k) => poemFor(i * n + k)); }
+function setPoemsPerDay(n){ S.poemsPerDay = n; save(); render(); }
 function poemCard(p){
   const [title,author,era,note,text,orig,origTitle] = p;
   return `<article class="poem">
@@ -479,7 +491,12 @@ function nextQ(){
   }
   render();
 }
-function markDone(){ S.answered[TODAY] = true; save(); pushCfg(); render(); }
+// Stored in this device's localStorage only, like everything else.
+function markDone(){
+  if (S.answered[TODAY]) delete S.answered[TODAY]; else S.answered[TODAY] = true;
+  save(); pushCfg(); render();
+  if (S.answered[TODAY]) { scrollTo({top: 0, behavior: 'smooth'}); if (navigator.vibrate) navigator.vibrate(40); }
+}
 
 function viewQuiz(){
   if (!quiz) {
@@ -583,6 +600,11 @@ function viewArch(){
     <p class="ety">iPhone: open the .ics file and tap Add All. Android: use the Google Calendar button (the Android Calendar app can't open .ics files).</p>
     <p class="ety" id="rmsg"></p>
   </div>`;
+  h += `<div class="card">
+    <div class="word" style="font-size:1.2rem">Poems per day</div>
+    <p class="meta">Each one from a different era; none repeat from one day to the next.</p>
+    <div class="chips">${[1,2,3].map(n => `<button class="chip ${poemsPerDay()===n?'l':''}" aria-pressed="${poemsPerDay()===n}" onclick="setPoemsPerDay(${n})">${n} poem${n>1?'s':''}</button>`).join('')}</div>
+  </div>`;
   const vs = englishVoices();
   h += `<div class="card">
     <div class="word" style="font-size:1.2rem">Pronunciation voice</div>
@@ -596,7 +618,7 @@ function viewArch(){
   for (let d=Math.max(TODAY,0); d>=0; d--) {
     h += `<div class="hist"><h3>${fmt(d)}${S.best[d]!==undefined?` · quiz ${S.best[d]}/6`:''}</h3><div class="chips">` +
       [...wordsFor(d), insultFor(d)].map(w => `<button class="chip ${S.learned[w[0]]?'l':''} ${IS_INSULT.has(w[0])?'ins':''}" onclick="go('today',${d})">${esc(w[0])}</button>`).join('') +
-      `</div><div class="meta" style="margin-top:8px">Poem: ${esc(poemFor(d)[0])} · ${esc(poemFor(d)[1])}</div></div>`;
+      `</div><div class="meta" style="margin-top:8px">${S.answered[d] ? '<b style="color:var(--good)">✓ done</b> · ' : ''}Poem${poemsPerDay()>1?'s':''}: ${poemsForDay(d).map(p => esc(p[0])).join(' · ')}</div></div>`;
   }
   const kept = Object.keys(S.rev).filter(w => BY[w]).sort((a,b) => S.rev[a].due - S.rev[b].due);
   if (kept.length) h += `<div class="hist"><h3>Kept words in review · comes back in…</h3><div class="chips">` +
@@ -617,7 +639,7 @@ function viewArch(){
 function render(){
   $('app').innerHTML = `<header>
     <h1>Acta Diurna<small>five words, daily</small></h1>
-    <div class="streak"><b>${streak()}</b> day streak<br>
+    <div class="streak">${S.answered[TODAY] ? '<span class="done-chip">✓ Done today</span> ' : ''}<b>${streak()}</b> day streak<br>
       <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button>
       <button class="share" onclick="checkForUpdate()" aria-label="Check for updates">↻ Update</button></div></header>` +
     (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : view==='poems' ? viewPoems() : view==='words' ? viewWords() : viewArch());
