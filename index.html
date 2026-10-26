@@ -112,6 +112,7 @@ html,body{overscroll-behavior-y:contain}
 <nav>
   <button id="t-today" onclick="go('today')"><span>☀</span>Today</button>
   <button id="t-poems" onclick="go('poems')"><span>✒</span>Poems</button>
+  <button id="t-words" onclick="go('words')"><span>❦</span>Words</button>
   <button id="t-quiz" onclick="go('quiz')"><span>?</span>Quiz</button>
   <button id="t-arch" onclick="go('arch')"><span>❡</span>Archive</button>
 </nav>
@@ -349,6 +350,60 @@ function poemCard(p){
   </article>`;
 }
 
+// ---- word browser: filter by part of speech and by when you'd use it ----
+// Themes come from fixed keyword lists matched against each definition (offline, no AI); insults are their own list.
+// whole words only, allowing ordinary endings, so "red" doesn't catch "reduce" or "go" catch "gold"
+const themeRe = words => new RegExp('\\b(' + words.split(/\s+/).join('|') + ')(s|es|ed|d|ing|ly|y|ness|er|est)?\\b');
+const THEMES = {
+  'Insults':            null,
+  'Nature':             themeRe('tree plant flower blossom leaf leaves grass forest wood woods woodland river stream sea ocean lake mountain hill valley field meadow garden animal bird fish beast earth soil stone rock shore nature countryside rural pastoral herb fruit seed vegetation verdure moss fern bough branch'),
+  'Weather & seasons':  themeRe('rain wind breeze storm snow frost ice icy cold heat warm sun sunshine cloud fog mist weather season spring summer autumn winter wintry humid damp chill gale thunder'),
+  'Light & colour':     themeRe('bright shine shining glow gleam glitter sparkle flash radiant radiance lustre luster lustrous colour color red blue green yellow purple black white grey gray pale dark darkness shadow shade dusk twilight iridescent silver silvery golden brilliant luminous'),
+  'Sounds':             themeRe('sound noise noisy loud voice bell whisper hiss rustle murmur howl laugh laughter song sing singing music musical tone roar rumble clamor clamour echo resound resounding shrill hum'),
+  'People & character': themeRe('person people man men woman women fellow character temper disposition manner manners behaviour behavior habit conduct proud pride vain vanity cruel honest deceit deceitful courage coward cowardly lazy idle generous polite rude haughty humble wise foolish fool'),
+  'Feelings':           themeRe('feel feeling emotion grief grieve sorrow sad sadness joy joyous happy happiness anger angry fear afraid love longing melancholy gloom gloomy cheer cheerful delight despair hope regret anxious anxiety lonely mourn mournful passion passionate excitement pity'),
+  'Talk & speech':      themeRe('speak speech talk talkative word say saying language utter utterance declare praise criticize criticise scold argue argument answer tell story stories write writing letter eloquent verbose chatter gossip boast insult abuse'),
+  'Movement':           themeRe('walk run move moving movement motion jump leap dance stroll wander travel journey hurry rush crawl creep swing shake tremble roll fly flight ride step stride gallop'),
+  'Food & drink':       themeRe('eat eating food drink drinking wine meat bread meal feast taste appetite hunger hungry thirst thirsty cook cooking sweet sour alcohol beer liquor dish'),
+  'Mind & knowledge':   themeRe('think thinking thought mind mental knowledge know learn learning learned reason reasoning wisdom understand understanding idea study memory remember forget belief believe doubt imagine imagination perceive perception intellect intellectual clever stupid'),
+  'Time':               themeRe('time day daily night evening morning year age ancient brief fleeting moment hour forever eternal eternity lasting delay soon early past future duration transient transitory temporary'),
+};
+const POS_SETS = {All: null, Adjectives: 'adjective', Verbs: 'verb', Nouns: 'noun', Adverbs: 'adverb'};
+const themesOf = (() => {
+  const cache = {};
+  return w => cache[w[0]] || (cache[w[0]] = Object.keys(THEMES).filter(t =>
+    t === 'Insults' ? IS_INSULT.has(w[0]) : THEMES[t].test(defOf(w).toLowerCase())));
+})();
+let wPos = 'All', wTheme = 'All', wQuery = '', wMetOnly = false, wShow = 60, wOpen = null;
+function wordsMet(){ const s = new Set(); for (let d=0; d<=Math.max(TODAY,0); d++) { wordsFor(d).forEach(w => s.add(w[0])); s.add(insultFor(d)[0]); } return s; }
+function browseList(){
+  const met = wMetOnly ? wordsMet() : null, q = wQuery.trim().toLowerCase();
+  return [...WORDS, ...INSULTS].filter(w =>
+    (!POS_SETS[wPos] || w[2] === POS_SETS[wPos]) &&
+    (wTheme === 'All' || themesOf(w).includes(wTheme)) &&
+    (!met || met.has(w[0])) &&
+    (!q || w[0].toLowerCase().includes(q) || defOf(w).toLowerCase().includes(q)))
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+function setW(k, v){ if (k === 'pos') wPos = v; if (k === 'theme') wTheme = v; if (k === 'met') wMetOnly = v; wShow = 60; wOpen = null; render(); }
+function searchW(v){ wQuery = v; wShow = 60; wOpen = null; const at = $('wsearch').selectionStart; render(); const s = $('wsearch'); s.focus(); s.setSelectionRange(at, at); }
+function viewWords(){
+  const list = browseList();
+  const row = (label, opts, curV, key) => `<div class="meta" style="margin:10px 0 6px">${label}</div><div class="chips">` +
+    opts.map(o => `<button class="chip ${o===curV?'l':''} ${o==='Insults'?'ins':''}" onclick="setW('${key}','${o}')">${o}</button>`).join('') + `</div>`;
+  return `<div class="daynav"><div>Words · ${list.length}</div></div>
+    <input id="wsearch" type="search" placeholder="Search words or meanings" value="${esc(wQuery)}" oninput="searchW(this.value)"
+      style="width:100%;font:inherit;font-size:1rem;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px">
+    ${row('Type', Object.keys(POS_SETS), wPos, 'pos')}
+    ${row('When to use it', ['All', ...Object.keys(THEMES)], wTheme, 'theme')}
+    <label class="meta" style="display:flex;gap:8px;align-items:center;margin:12px 0">
+      <input type="checkbox" ${wMetOnly?'checked':''} onchange="setW('met',this.checked)" style="width:20px;height:20px"> Only words I've met so far</label>
+    ${list.slice(0, wShow).map(w => wOpen === w[0] ? card(w) :
+      `<button class="opt" onclick="wOpen='${esc(w[0]).replace(/'/g,"\\'")}';render()"><b>${esc(w[0])}</b> <span class="meta"><em>${esc(w[2])}</em> · ${esc(defOf(w).slice(0, 90))}${defOf(w).length>90?'…':''}</span></button>`).join('')}
+    ${list.length > wShow ? `<button class="btn alt" onclick="wShow+=60;render()">Show more (${list.length - wShow} left)</button>` : ''}
+    ${!list.length ? '<p class="hint">No words match. Try another filter.</p>' : ''}`;
+}
+
 // ---- poems browser: every poem, filterable by era, read one at a time ----
 let poemEra = 'All', poemSel = null;
 const ERAS = ['All', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
@@ -548,8 +603,8 @@ function render(){
     <div class="streak"><b>${streak()}</b> day streak<br>
       <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button>
       <button class="share" onclick="checkForUpdate()" aria-label="Check for updates">↻ Update</button></div></header>` +
-    (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : view==='poems' ? viewPoems() : viewArch());
-  ['today','poems','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
+    (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : view==='poems' ? viewPoems() : view==='words' ? viewWords() : viewArch());
+  ['today','words','poems','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
 }
 
 // if the app stays open past midnight, roll over to the new day
