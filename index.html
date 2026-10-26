@@ -100,6 +100,8 @@ html,body{overscroll-behavior-y:contain}
 #ptr.spin::before{content:'';display:inline-block;width:.8em;height:.8em;margin-right:8px;border:2px solid currentColor;
   border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.say.fav{font-size:1.3rem;color:var(--muted)}
+.say.fav.on{color:var(--bad);border-color:var(--bad)}
 .def.then{color:var(--muted);font-size:.98rem;margin-top:4px}
 .ref{display:inline-block;font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-left:4px;vertical-align:middle}
 .sect{margin:22px 0 10px;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -131,7 +133,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---- state (localStorage, guarded) ----
-let S = {learned:{}, visited:{}, best:{}, known:{}, swaps:{}, rev:{}, mastered:{}, answered:{}, missed:{}};
+let S = {learned:{}, visited:{}, best:{}, known:{}, swaps:{}, rev:{}, mastered:{}, answered:{}, missed:{}, fav:{}, favPoems:{}};
 try { Object.assign(S, JSON.parse(localStorage.getItem('actaDiurna') || '{}')); } catch(e){}
 const save = () => { try { localStorage.setItem('actaDiurna', JSON.stringify(S)); } catch(e){} };
 
@@ -261,6 +263,14 @@ const defOf = w => shifted(w[0]) ? shifted(w[0]).now : w[3];
 // IPA (from Wiktionary) when available, with the plain-English respelling alongside
 const pronHtml = (w, pron) => rec(w).ipa ? `${esc(rec(w).ipa)} <span style="opacity:.75">(${esc(pron)})</span>` : `/${esc(pron)}/`;
 
+// ---- favourites (words and poems), stored on this device only ----
+const favStore = kind => kind === 'poem' ? S.favPoems : S.fav;
+const isFav = (kind, id) => !!favStore(kind)[id];
+function toggleFav(kind, id){ const s = favStore(kind); if (s[id]) delete s[id]; else s[id] = Date.now(); save(); render(); }
+const favBtn = (kind, id) => { const on = isFav(kind, id), q = esc(id).replace(/'/g, "\\'");
+  return `<button class="say fav ${on?'on':''}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} favourites"
+    onclick="toggleFav('${kind}','${q}')">${on ? '♥' : '♡'}</button>`; };
+
 // ---- views ----
 function card(w){
   const [word,pron,pos,def,ex,ety,src] = w;
@@ -270,7 +280,10 @@ function card(w){
     <div class="top">
       <div><div class="word">${esc(word)}</div>
       <div class="meta">${pronHtml(word, pron)} · <em>${esc(pos)}</em></div></div>
-      <button class="say" aria-label="Pronounce ${esc(word)}" title="${rec(word).f?'Human recording':'Device voice'}" onclick="speak('${esc(word).replace(/'/g,"\\'")}')">🔊</button>
+      <div style="display:flex;gap:6px;flex:none">
+        ${favBtn('word', word)}
+        <button class="say" aria-label="Pronounce ${esc(word)}" title="${rec(word).f?'Human recording':'Device voice'}" onclick="speak('${esc(word).replace(/'/g,"\\'")}')">🔊</button>
+      </div>
     </div>
     ${shifted(word) ? `
     <p class="def"><b>Today:</b> ${esc(shifted(word).now)} <span class="ref">Open English WordNet</span></p>
@@ -338,7 +351,7 @@ function poemFor(i){ return POEMS[((i % POEMS.length) + POEMS.length) % POEMS.le
 function poemCard(p){
   const [title,author,era,note,text,orig,origTitle] = p;
   return `<article class="poem">
-    <span class="era">${esc(era)}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="era">${esc(era)}</span>${favBtn('poem', title)}</div>
     <h2>${esc(title)}</h2>
     <div class="by">${esc(author)} · ${esc(note)}</div>
     <div class="txt">${esc(text)}</div>
@@ -374,7 +387,7 @@ const themesOf = (() => {
   return w => cache[w[0]] || (cache[w[0]] = Object.keys(THEMES).filter(t =>
     t === 'Insults' ? IS_INSULT.has(w[0]) : THEMES[t].test(defOf(w).toLowerCase())));
 })();
-let wPos = 'All', wTheme = 'All', wQuery = '', wMetOnly = false, wShow = 60, wOpen = null;
+let wPos = 'All', wTheme = 'All', wQuery = '', wMetOnly = false, wFavOnly = false, wShow = 60, wOpen = null;
 function wordsMet(){ const s = new Set(); for (let d=0; d<=Math.max(TODAY,0); d++) { wordsFor(d).forEach(w => s.add(w[0])); s.add(insultFor(d)[0]); } return s; }
 function browseList(){
   const met = wMetOnly ? wordsMet() : null, q = wQuery.trim().toLowerCase();
@@ -382,10 +395,11 @@ function browseList(){
     (!POS_SETS[wPos] || w[2] === POS_SETS[wPos]) &&
     (wTheme === 'All' || themesOf(w).includes(wTheme)) &&
     (!met || met.has(w[0])) &&
+    (!wFavOnly || isFav('word', w[0])) &&
     (!q || w[0].toLowerCase().includes(q) || defOf(w).toLowerCase().includes(q)))
     .sort((a, b) => a[0].localeCompare(b[0]));
 }
-function setW(k, v){ if (k === 'pos') wPos = v; if (k === 'theme') wTheme = v; if (k === 'met') wMetOnly = v; wShow = 60; wOpen = null; render(); }
+function setW(k, v){ if (k === 'pos') wPos = v; if (k === 'theme') wTheme = v; if (k === 'met') wMetOnly = v; if (k === 'fav') wFavOnly = v; wShow = 60; wOpen = null; render(); }
 function searchW(v){ wQuery = v; wShow = 60; wOpen = null; const at = $('wsearch').selectionStart; render(); const s = $('wsearch'); s.focus(); s.setSelectionRange(at, at); }
 function viewWords(){
   const list = browseList();
@@ -398,16 +412,18 @@ function viewWords(){
     ${row('When to use it', ['All', ...Object.keys(THEMES)], wTheme, 'theme')}
     <label class="meta" style="display:flex;gap:8px;align-items:center;margin:12px 0">
       <input type="checkbox" ${wMetOnly?'checked':''} onchange="setW('met',this.checked)" style="width:20px;height:20px"> Only words I've met so far</label>
+    <button class="chip ${wFavOnly?'ins':''}" style="margin-bottom:12px" onclick="setW('fav',${!wFavOnly})">${wFavOnly?'♥':'♡'} Favourites (${Object.keys(S.fav).length})</button>
     ${list.slice(0, wShow).map(w => wOpen === w[0] ? card(w) :
-      `<button class="opt" onclick="wOpen='${esc(w[0]).replace(/'/g,"\\'")}';render()"><b>${esc(w[0])}</b> <span class="meta"><em>${esc(w[2])}</em> · ${esc(defOf(w).slice(0, 90))}${defOf(w).length>90?'…':''}</span></button>`).join('')}
+      `<button class="opt" onclick="wOpen='${esc(w[0]).replace(/'/g,"\\'")}';render()"><b>${isFav('word',w[0])?'♥ ':''}${esc(w[0])}</b> <span class="meta"><em>${esc(w[2])}</em> · ${esc(defOf(w).slice(0, 90))}${defOf(w).length>90?'…':''}</span></button>`).join('')}
     ${list.length > wShow ? `<button class="btn alt" onclick="wShow+=60;render()">Show more (${list.length - wShow} left)</button>` : ''}
     ${!list.length ? '<p class="hint">No words match. Try another filter.</p>' : ''}`;
 }
 
 // ---- poems browser: every poem, filterable by era, read one at a time ----
 let poemEra = 'All', poemSel = null;
-const ERAS = ['All', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
-const poemList = () => POEMS.map((p, i) => i).filter(i => poemEra === 'All' || POEMS[i][2] === poemEra);
+const ERAS = ['All', '♥ Favourites', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
+const poemList = () => POEMS.map((p, i) => i).filter(i => poemEra === 'All' ||
+  (poemEra === '♥ Favourites' ? isFav('poem', POEMS[i][0]) : POEMS[i][2] === poemEra));
 function openPoem(i){ poemSel = i; render(); window.scrollTo(0,0); }
 function setEra(e){ poemEra = e; poemSel = null; render(); }
 function viewPoems(){
@@ -425,8 +441,9 @@ function viewPoems(){
       <button class="btn alt" onclick="poemSel=null;render()">← All poems</button>`;
   }
   return `<div class="daynav"><div>Poems · ${list.length}</div></div>${chips}` +
+    (!list.length ? `<p class="hint">Tap ♡ on any poem to keep it here.</p>` : '') +
     list.map(i => `<button class="opt" onclick="openPoem(${i})">
-      <b>${esc(POEMS[i][0])}</b><br><span class="meta">${esc(POEMS[i][1])} · ${esc(POEMS[i][2])}</span></button>`).join('');
+      <b>${isFav('poem',POEMS[i][0])?'♥ ':''}${esc(POEMS[i][0])}</b><br><span class="meta">${esc(POEMS[i][1])} · ${esc(POEMS[i][2])}</span></button>`).join('');
 }
 
 function startQuiz(i){
