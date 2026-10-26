@@ -121,7 +121,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---- state (localStorage, guarded) ----
-let S = {learned:{}, visited:{}, best:{}, known:{}, swaps:{}, rev:{}, mastered:{}, answered:{}};
+let S = {learned:{}, visited:{}, best:{}, known:{}, swaps:{}, rev:{}, mastered:{}, answered:{}, missed:{}};
 try { Object.assign(S, JSON.parse(localStorage.getItem('actaDiurna') || '{}')); } catch(e){}
 const save = () => { try { localStorage.setItem('actaDiurna', JSON.stringify(S)); } catch(e){} };
 
@@ -235,7 +235,7 @@ function toggle(w){
 }
 function reviewed(w, ok){
   const r = S.rev[w]; if (!r) return;
-  if (!ok) { r.step = 0; r.due = today0() + 1; }
+  if (!ok) { r.step = 0; r.due = today0() + 1; missed(w); }
   else if (++r.step >= INT.length) { delete S.rev[w]; S.mastered[w] = today0(); }
   else r.due = today0() + INT[r.step];
   save(); render(); pushCfg();
@@ -289,6 +289,7 @@ function viewToday(){
   </div>
   <div class="progress"><i style="width:${n/PER_DAY*100}%"></i></div>
   ${isToday ? viewReviews() : ''}
+  ${isToday && missedWords().length ? `<button class="btn alt" style="border-color:var(--bad);color:var(--bad)" onclick="go('quiz')">Review ${missedWords().length} word${missedWords().length>1?'s':''} you got wrong →</button>` : ''}
   <div class="sect">Five words</div>
   ${ws.map(card).join('')}
   <div class="sect">…and one old insult</div>
@@ -375,11 +376,18 @@ function startQuiz(i){
   view = 'quiz'; render(); window.scrollTo(0,0);
 }
 
+// Words you get wrong go on a list; two right answers in a row take them off it.
+const MISS_CLEAR = 2;
+function missed(w){ S.missed[w] = {wrong: ((S.missed[w]||{}).wrong||0) + 1, right: 0}; }
+function gotRight(w){ const m = S.missed[w]; if (m && ++m.right >= MISS_CLEAR) delete S.missed[w]; }
+const missedWords = () => Object.keys(S.missed).filter(w => BY[w]);
+
 function pick(o){
   if (quiz.picked !== null) return;
   quiz.picked = o;
-  if (o === quiz.qs[quiz.q].ans) quiz.score++;
-  render();
+  const ans = quiz.qs[quiz.q].ans;
+  if (o === ans) { quiz.score++; gotRight(ans); } else missed(ans);
+  save(); render();
 }
 function nextQ(){
   quiz.q++; quiz.picked = null;
@@ -396,14 +404,16 @@ function viewQuiz(){
   if (!quiz) {
     return `<div class="daynav"><div>Quick quiz</div></div>
     <p>Match the definition to the word. Choose which day to practise:</p>
-    <button class="btn" onclick="startQuiz(${Math.max(TODAY,0)})">Today's 5 words</button>
-    <button class="btn alt" onclick="startReview()">Mixed review of everything so far</button>`;
+    <button class="btn" onclick="startQuiz(${Math.max(TODAY,0)})">Today's words</button>
+    <button class="btn alt" onclick="startReview()">Mixed review of everything so far</button>
+    ${missedSection()}`;
   }
   if (quiz.q >= quiz.qs.length) {
     const s = quiz.score, t = quiz.qs.length;
     return `<div class="score">${s} / ${t}</div>
     <p style="text-align:center">${s===t?'Flawless. Impressive vocabulary, truly sesquipedalian.':s>=t-1?'Nearly there.':'Worth another look at the cards.'}</p>
-    <button class="btn" onclick="quiz.day==='mix'?startReview():startQuiz(quiz.day)">Try again</button>
+    <button class="btn" onclick="quiz.day==='mix'?startReview():quiz.day==='missed'?startMissed():startQuiz(quiz.day)">Try again</button>
+    ${missedWords().length && quiz.day !== 'missed' ? `<button class="btn alt" onclick="startMissed()">Review the ${missedWords().length} I got wrong</button>` : ''}
     <button class="btn alt" onclick="go('today',Math.max(TODAY,0))">Back to words</button>`;
   }
   const q = quiz.qs[quiz.q];
@@ -416,6 +426,27 @@ function viewQuiz(){
   <p class="quiz-q">${esc(q.def)}</p>
   ${opts}
   ${quiz.picked!==null?`<button class="btn" onclick="nextQ()">${quiz.q+1>=quiz.qs.length?'See score':'Next'}</button>`:''}`;
+}
+
+function missedSection(){
+  const ms = missedWords();
+  if (!ms.length) return `<p class="hint">Words you get wrong will collect here so you can review just those.</p>`;
+  return `<div class="sect">Words I got wrong · ${ms.length}</div>
+    <p class="meta">Each one leaves the list after ${MISS_CLEAR} right answers in a row.</p>
+    <button class="btn" style="background:var(--bad)" onclick="startMissed()">Quiz me on just these</button>
+    <button class="btn alt" onclick="studyMissed=!studyMissed;render()">${studyMissed ? 'Hide' : 'Study'} the cards</button>
+    ${studyMissed ? ms.map(w => card(BY[w])).join('') : `<div class="chips" style="margin-top:12px">` +
+      ms.map(w => `<span class="chip ins">${esc(w)} ×${S.missed[w].wrong}</span>`).join('') + `</div>`}`;
+}
+let studyMissed = false;
+function startMissed(){
+  const ms = missedWords().sort(() => Math.random()-.5).slice(0, 10).map(w => BY[w]);
+  const qs = ms.map(w => {
+    const others = (IS_INSULT.has(w[0]) ? INSULTS : WORDS).filter(x => x[0] !== w[0]).sort(() => Math.random()-.5).slice(0,3);
+    return {def:defOf(w), ans:w[0], opts:[w,...others].sort(() => Math.random()-.5).map(x => x[0])};
+  });
+  quiz = {day:'missed', qs, q:0, score:0, picked:null};
+  view = 'quiz'; render(); window.scrollTo(0,0);
 }
 
 function startReview(){
