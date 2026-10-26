@@ -53,11 +53,11 @@ Everything is pre-built. The scripts in `tools/` regenerate the data files from 
 
 Usage is in each script's docstring. After changing any app file, bump `CACHE` in `sw.js` so installed copies update.
 
-## Sources and licences
+## Sources and licenses
 
 - **Webster's Unabridged Dictionary (1913)** and the **novels** used for word selection: public domain, via [Project Gutenberg](https://www.gutenberg.org).
 - **Open English WordNet 2024** (modern definitions shown as "Today"): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), © the Open English WordNet contributors, https://github.com/globalwordnet/english-wordnet.
-- **Pronunciation recordings:** by Wiktionary contributors, hosted on Wikimedia Commons under their individual licences (mostly CC BY-SA, some public domain). Each file's author and licence is listed in `audio-credits.json`.
+- **Pronunciation recordings:** by Wiktionary contributors, hosted on Wikimedia Commons under their individual licenses (mostly CC BY-SA, some public domain). Each file's author and license is listed in `audio-credits.json`.
 - **IPA transcriptions:** Wiktionary (CC BY-SA), via [dictionaryapi.dev](https://dictionaryapi.dev).
 - **Poems:** public-domain texts. Sappho, Catullus, Horace, Li Bai's "Quiet Night Thought" and Bashō in `poems.js` (marked "tr. for this app") are new translations made for this app.
   Chinese translations are by Ezra Pound (*Cathay*, 1915), Florence Ayscough & Amy Lowell (*Fir-Flower Tablets*, 1921) and Arthur Waley (*A Hundred and Seventy Chinese Poems*, 1918), all public domain in the United States.

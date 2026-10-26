@@ -263,12 +263,12 @@ const defOf = w => shifted(w[0]) ? shifted(w[0]).now : w[3];
 // IPA (from Wiktionary) when available, with the plain-English respelling alongside
 const pronHtml = (w, pron) => rec(w).ipa ? `${esc(rec(w).ipa)} <span style="opacity:.75">(${esc(pron)})</span>` : `/${esc(pron)}/`;
 
-// ---- favourites (words and poems), stored on this device only ----
+// ---- favorites (words and poems), stored on this device only ----
 const favStore = kind => kind === 'poem' ? S.favPoems : S.fav;
 const isFav = (kind, id) => !!favStore(kind)[id];
 function toggleFav(kind, id){ const s = favStore(kind); if (s[id]) delete s[id]; else s[id] = Date.now(); save(); render(); }
 const favBtn = (kind, id) => { const on = isFav(kind, id), q = esc(id).replace(/'/g, "\\'");
-  return `<button class="say fav ${on?'on':''}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} favourites"
+  return `<button class="say fav ${on?'on':''}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} favorites"
     onclick="toggleFav('${kind}','${q}')">${on ? '♥' : '♡'}</button>`; };
 
 // ---- views ----
@@ -371,7 +371,7 @@ const THEMES = {
   'Insults':            null,
   'Nature':             themeRe('tree plant flower blossom leaf leaves grass forest wood woods woodland river stream sea ocean lake mountain hill valley field meadow garden animal bird fish beast earth soil stone rock shore nature countryside rural pastoral herb fruit seed vegetation verdure moss fern bough branch'),
   'Weather & seasons':  themeRe('rain wind breeze storm snow frost ice icy cold heat warm sun sunshine cloud fog mist weather season spring summer autumn winter wintry humid damp chill gale thunder'),
-  'Light & colour':     themeRe('bright shine shining glow gleam glitter sparkle flash radiant radiance lustre luster lustrous colour color red blue green yellow purple black white grey gray pale dark darkness shadow shade dusk twilight iridescent silver silvery golden brilliant luminous'),
+  'Light & color':      themeRe('bright shine shining glow gleam glitter sparkle flash radiant radiance lustre luster lustrous colour color red blue green yellow purple black white grey gray pale dark darkness shadow shade dusk twilight iridescent silver silvery golden brilliant luminous'),
   'Sounds':             themeRe('sound noise noisy loud voice bell whisper hiss rustle murmur howl laugh laughter song sing singing music musical tone roar rumble clamor clamour echo resound resounding shrill hum'),
   'People & character': themeRe('person people man men woman women fellow character temper disposition manner manners behaviour behavior habit conduct proud pride vain vanity cruel honest deceit deceitful courage coward cowardly lazy idle generous polite rude haughty humble wise foolish fool'),
   'Feelings':           themeRe('feel feeling emotion grief grieve sorrow sad sadness joy joyous happy happiness anger angry fear afraid love longing melancholy gloom gloomy cheer cheerful delight despair hope regret anxious anxiety lonely mourn mournful passion passionate excitement pity'),
@@ -412,7 +412,7 @@ function viewWords(){
     ${row('When to use it', ['All', ...Object.keys(THEMES)], wTheme, 'theme')}
     <label class="meta" style="display:flex;gap:8px;align-items:center;margin:12px 0">
       <input type="checkbox" ${wMetOnly?'checked':''} onchange="setW('met',this.checked)" style="width:20px;height:20px"> Only words I've met so far</label>
-    <button class="chip ${wFavOnly?'ins':''}" style="margin-bottom:12px" onclick="setW('fav',${!wFavOnly})">${wFavOnly?'♥':'♡'} Favourites (${Object.keys(S.fav).length})</button>
+    <button class="chip ${wFavOnly?'ins':''}" style="margin-bottom:12px" onclick="setW('fav',${!wFavOnly})">${wFavOnly?'♥':'♡'} Favorites (${Object.keys(S.fav).length})</button>
     ${list.slice(0, wShow).map(w => wOpen === w[0] ? card(w) :
       `<button class="opt" onclick="wOpen='${esc(w[0]).replace(/'/g,"\\'")}';render()"><b>${isFav('word',w[0])?'♥ ':''}${esc(w[0])}</b> <span class="meta"><em>${esc(w[2])}</em> · ${esc(defOf(w).slice(0, 90))}${defOf(w).length>90?'…':''}</span></button>`).join('')}
     ${list.length > wShow ? `<button class="btn alt" onclick="wShow+=60;render()">Show more (${list.length - wShow} left)</button>` : ''}
@@ -421,9 +421,9 @@ function viewWords(){
 
 // ---- poems browser: every poem, filterable by era, read one at a time ----
 let poemEra = 'All', poemSel = null;
-const ERAS = ['All', '♥ Favourites', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
+const ERAS = ['All', '♥ Favorites', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
 const poemList = () => POEMS.map((p, i) => i).filter(i => poemEra === 'All' ||
-  (poemEra === '♥ Favourites' ? isFav('poem', POEMS[i][0]) : POEMS[i][2] === poemEra));
+  (poemEra === '♥ Favorites' ? isFav('poem', POEMS[i][0]) : POEMS[i][2] === poemEra));
 function openPoem(i){ poemSel = i; render(); window.scrollTo(0,0); }
 function setEra(e){ poemEra = e; poemSel = null; render(); }
 function viewPoems(){
@@ -484,7 +484,7 @@ function markDone(){ S.answered[TODAY] = true; save(); pushCfg(); render(); }
 function viewQuiz(){
   if (!quiz) {
     return `<div class="daynav"><div>Quick quiz</div></div>
-    <p>Match the definition to the word. Choose which day to practise:</p>
+    <p>Match the definition to the word. Choose what to practice:</p>
     <button class="btn" onclick="startQuiz(${Math.max(TODAY,0)})">Today's words</button>
     <button class="btn alt" onclick="startReview()">Mixed review of everything so far</button>
     ${missedSection()}`;
@@ -610,7 +610,7 @@ function viewArch(){
   h += `<p class="hint">${WORDS.length} words and ${INSULTS.length} insults in the book. When it runs out, the cycle begins again.<br>
     Sources: Webster's 1913 &amp; classic texts via Project Gutenberg · modern senses from Open English WordNet (CC BY 4.0) ·
     recordings by Wiktionary contributors (<a href="audio-credits.json" style="color:var(--accent)">credits</a>) ·
-    <a href="https://github.com/schneidesalex11-cmyk/acta-diurna#sources-and-licences" style="color:var(--accent)">all licences</a></p>`;
+    <a href="https://github.com/schneidesalex11-cmyk/acta-diurna#sources-and-licenses" style="color:var(--accent)">all licenses</a></p>`;
   return h;
 }
 
