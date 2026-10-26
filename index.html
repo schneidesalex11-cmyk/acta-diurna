@@ -102,6 +102,7 @@ nav button span{display:block;font-size:1.25rem;line-height:1}
 <main id="app"></main>
 <nav>
   <button id="t-today" onclick="go('today')"><span>☀</span>Today</button>
+  <button id="t-poems" onclick="go('poems')"><span>✒</span>Poems</button>
   <button id="t-quiz" onclick="go('quiz')"><span>?</span>Quiz</button>
   <button id="t-arch" onclick="go('arch')"><span>❡</span>Archive</button>
 </nav>
@@ -296,6 +297,7 @@ function viewToday(){
   ${isToday ? `<button class="btn alt" onclick="markDone()">${S.answered[TODAY] ? '✓ Done for today' : "I'm done for today (stops the nagging)"}</button>` : ''}
   <div class="sect">Poem of the day</div>
   ${poemCard(poemFor(cur))}
+  <button class="btn alt" onclick="go('poems')">More poems →</button>
   <div class="sect">More today, from around the web</div>
   <p class="meta" style="line-height:2">
     <a href="https://www.poetryfoundation.org/poems/poem-of-the-day" target="_blank" rel="noopener" style="color:var(--accent)">Poetry Foundation: Poem of the Day ↗</a><br>
@@ -335,6 +337,31 @@ function poemCard(p){
         <a href="https://www.deepl.com/translator#zh/en-us/${encodeURIComponent(orig)}" target="_blank" rel="noopener" style="color:var(--accent)">Compare in DeepL ↗</a></p>
     </details>` : ''}
   </article>`;
+}
+
+// ---- poems browser: every poem, filterable by era, read one at a time ----
+let poemEra = 'All', poemSel = null;
+const ERAS = ['All', 'Ancient', 'Classical', 'New', 'Modern', 'Chinese'];
+const poemList = () => POEMS.map((p, i) => i).filter(i => poemEra === 'All' || POEMS[i][2] === poemEra);
+function openPoem(i){ poemSel = i; render(); window.scrollTo(0,0); }
+function setEra(e){ poemEra = e; poemSel = null; render(); }
+function viewPoems(){
+  const list = poemList();
+  const chips = `<div class="chips" style="margin:6px 0 16px">` + ERAS.map(e =>
+    `<button class="chip ${e===poemEra?'l':''}" onclick="setEra('${e}')">${e}</button>`).join('') + `</div>`;
+  if (poemSel !== null) {
+    const pos = list.indexOf(poemSel), prev = list[pos-1], next = list[pos+1];
+    return `<div class="daynav">
+        <button onclick="openPoem(${prev})" aria-label="Previous poem" ${prev===undefined?'disabled':''}>‹</button>
+        <div>${pos+1} of ${list.length} · ${poemEra === 'All' ? 'all poems' : poemEra}</div>
+        <button onclick="openPoem(${next})" aria-label="Next poem" ${next===undefined?'disabled':''}>›</button>
+      </div>
+      ${poemCard(POEMS[poemSel])}
+      <button class="btn alt" onclick="poemSel=null;render()">← All poems</button>`;
+  }
+  return `<div class="daynav"><div>Poems · ${list.length}</div></div>${chips}` +
+    list.map(i => `<button class="opt" onclick="openPoem(${i})">
+      <b>${esc(POEMS[i][0])}</b><br><span class="meta">${esc(POEMS[i][1])} · ${esc(POEMS[i][2])}</span></button>`).join('');
 }
 
 function startQuiz(i){
@@ -476,8 +503,8 @@ function render(){
     <h1>Acta Diurna<small>five words, daily</small></h1>
     <div class="streak"><b>${streak()}</b> day streak<br>
       <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button></div></header>` +
-    (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : viewArch());
-  ['today','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
+    (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : view==='poems' ? viewPoems() : viewArch());
+  ['today','poems','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
 }
 
 // if the app stays open past midnight, roll over to the new day
