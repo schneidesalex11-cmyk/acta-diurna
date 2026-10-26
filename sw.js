@@ -1,5 +1,5 @@
 importScripts('words.js', 'words-gutenberg.js', 'funverbs.js', 'insults.js');
-const CACHE = 'acta-diurna-v18';
+const CACHE = 'acta-diurna-v19';
 const START = Date.UTC(2026,9,26), PER_DAY = 5, DAY_MS = 86400000;
 
 function todayWords(){
