@@ -92,6 +92,14 @@ nav button span{display:block;font-size:1.25rem;line-height:1}
   color:var(--accent-ink);background:var(--bad);border-radius:999px;padding:3px 10px;margin-bottom:8px}
 .chip.ins{border-color:var(--bad);color:var(--bad)}
 .share{margin-top:6px;border:1px solid var(--line);background:none;color:var(--accent);border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer;min-height:36px}
+/* we draw our own pull-to-refresh, so stop the browser's (Android Chrome) from competing */
+html,body{overscroll-behavior-y:contain}
+#ptr{position:fixed;left:50%;top:0;transform:translate(-50%,-60px);z-index:20;background:var(--card);color:var(--accent);
+  border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.9rem;box-shadow:0 2px 10px rgba(0,0,0,.15);
+  transition:transform .2s;pointer-events:none;margin-top:env(safe-area-inset-top)}
+#ptr.spin::before{content:'';display:inline-block;width:.8em;height:.8em;margin-right:8px;border:2px solid currentColor;
+  border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
 .def.then{color:var(--muted);font-size:.98rem;margin-top:4px}
 .ref{display:inline-block;font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-left:4px;vertical-align:middle}
 .sect{margin:22px 0 10px;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -99,6 +107,7 @@ nav button span{display:block;font-size:1.25rem;line-height:1}
 </style>
 </head>
 <body>
+<div id="ptr" aria-live="polite"></div>
 <main id="app"></main>
 <nav>
   <button id="t-today" onclick="go('today')"><span>☀</span>Today</button>
@@ -477,7 +486,9 @@ function viewArch(){
   const R = S.remind || {on:false, time:'08:00'};
   h += `<div class="card">
     <div class="word" style="font-size:1.2rem">Daily reminder</div>
-    <p class="meta">Pick a time. On iPhone, notifications need iOS 16.4+ and the app added to your Home Screen (Share → Add to Home Screen); the calendar option below works everywhere.</p>
+    <p class="meta">Pick a time. iPhone: needs iOS 16.4+ and the app added to your Home Screen (Share → Add to Home Screen).
+      Android: install it from Chrome's menu (⋮ → Install app); notifications then arrive even when it's closed.
+      The calendar options below work on both.</p>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input type="time" id="rtime" value="${R.time}" onchange="setRemind()" style="font:inherit;font-size:1.1rem;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px">
       <button class="got" onclick="enableNotif()">${R.on?'✓ Notifications on':'Turn on notifications'}</button>
@@ -495,7 +506,9 @@ function viewArch(){
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="got" onclick="downloadIcs(false)">Add daily event (.ics)</button>
       <button class="got" onclick="downloadIcs(true)">Add naggy version: 6 alerts a day</button>
+      <button class="got" onclick="googleCal()">Add to Google Calendar (Android)</button>
     </div>
+    <p class="ety">iPhone: open the .ics file and tap Add All. Android: use the Google Calendar button (the Android Calendar app can't open .ics files).</p>
     <p class="ety" id="rmsg"></p>
   </div>`;
   const vs = englishVoices();
@@ -533,7 +546,8 @@ function render(){
   $('app').innerHTML = `<header>
     <h1>Acta Diurna<small>five words, daily</small></h1>
     <div class="streak"><b>${streak()}</b> day streak<br>
-      <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button></div></header>` +
+      <button class="share" onclick="shareApp()" aria-label="Share this app">Share ↗</button>
+      <button class="share" onclick="checkForUpdate()" aria-label="Check for updates">↻ Update</button></div></header>` +
     (view==='today' ? viewToday() : view==='quiz' ? viewQuiz() : view==='poems' ? viewPoems() : viewArch());
   ['today','poems','quiz','arch'].forEach(t => $('t-'+t).classList.toggle('on', t===view));
 }
@@ -606,6 +620,56 @@ function downloadIcs(naggy){
   msg(naggy ? 'Open the file to add 6 daily alerts (at your time, then +15, +30 min, +1, +2 and +4 hours).'
             : 'Open the downloaded file to add the daily event to your calendar.');
 }
+
+// Google Calendar "new event" link with a daily repeat: the way to add a reminder on Android.
+function googleCal(){
+  const t = ($('rtime') ? $('rtime').value : (S.remind||{}).time) || '08:00';
+  const [h, m] = t.split(':').map(Number), n = new Date(), p = x => String(x).padStart(2,'0');
+  const at = new Date(n.getFullYear(), n.getMonth(), n.getDate(), h, m), end = new Date(at.getTime() + 15*60000);
+  const f = d => `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+  const url = location.href.split('#')[0].replace(/[^/]*$/, '');
+  const q = new URLSearchParams({action:'TEMPLATE', text:'Acta Diurna: five words and a poem', dates:`${f(at)}/${f(end)}`,
+    recur:'RRULE:FREQ=DAILY', details:'Open ' + url, ctz: Intl.DateTimeFormat().resolvedOptions().timeZone});
+  window.open('https://calendar.google.com/calendar/render?' + q, '_blank', 'noopener');
+}
+
+// ---- updates: button or pull down from the top ----
+const ptr = () => $('ptr');
+function showPtr(text, y = 12, spin = false){ const p = ptr(); p.textContent = text; p.classList.toggle('spin', spin); p.style.transform = `translate(-50%, ${y}px)`; }
+function hidePtr(delay = 0){ setTimeout(() => { ptr().style.transform = 'translate(-50%,-60px)'; ptr().classList.remove('spin'); }, delay); }
+let updating = false;
+async function checkForUpdate(){
+  if (updating) return;
+  if (!navigator.onLine) { showPtr('Offline: showing your saved copy'); hidePtr(2200); return; }
+  updating = true; showPtr('Checking for updates…', 12, true);
+  try {
+    const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      await reg.update();
+      const sw = reg.installing || reg.waiting;
+      if (sw) {                                    // a new version is downloading: wait for it to take over
+        showPtr('Downloading the new version…', 12, true);
+        await new Promise(res => { navigator.serviceWorker.addEventListener('controllerchange', res, {once: true}); setTimeout(res, 8000); });
+        sessionStorage.setItem('actaUpdated', '1');
+      }
+    }
+  } catch (e) {}
+  location.reload();                               // network-first, so this also picks up new words, audio and poems
+}
+try { if (sessionStorage.getItem('actaUpdated')) { sessionStorage.removeItem('actaUpdated'); setTimeout(() => { showPtr('Updated ✓'); hidePtr(1800); }, 300); } } catch (e) {}
+
+// pull-to-refresh, for touch screens (iPhone home-screen apps have no built-in one; Android's is disabled above)
+(() => {
+  let y0 = null, pulled = 0;
+  addEventListener('touchstart', e => { y0 = (scrollY <= 0 && e.touches.length === 1) ? e.touches[0].clientY : null; pulled = 0; }, {passive: true});
+  addEventListener('touchmove', e => {
+    if (y0 === null || updating) return;
+    pulled = e.touches[0].clientY - y0;
+    if (pulled <= 0 || scrollY > 0) { hidePtr(); return; }
+    showPtr(pulled > 80 ? 'Release to check for updates' : 'Pull to check for updates', Math.min(pulled / 2, 40));
+  }, {passive: true});
+  addEventListener('touchend', () => { if (y0 !== null && pulled > 80 && !updating) checkForUpdate(); else if (!updating) hidePtr(); y0 = null; });
+})();
 
 // ---- sharing ----
 async function shareApp(){

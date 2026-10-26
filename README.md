@@ -21,7 +21,10 @@ All content ships with the app and rotates by date.
 Open the link on each device:
 
 - **iPhone:** Safari → Share → **Add to Home Screen**. Notifications need iOS 16.4+ and the Home Screen version.
-- **Android / desktop Chrome or Edge:** use the browser's **Install app** button.
+- **Android:** Chrome → ⋮ menu → **Install app** (or **Add to Home screen**). Notifications then work even when the app is closed; for calendar reminders use **Add to Google Calendar** in Archive.
+- **Desktop Chrome or Edge:** use the install icon at the right of the address bar.
+
+To update, pull down from the top of the app (or tap **↻ Update**).
 
 Each device keeps its own progress (it's stored on the device, nothing is sent anywhere).
 
